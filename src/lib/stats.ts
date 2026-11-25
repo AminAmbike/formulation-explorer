@@ -1,0 +1,119 @@
+/**
+ * Small statistics helpers. Every function tolerates missing values (null)
+ * and returns null instead of NaN when the answer is undefined.
+ */
+
+type MaybeNumber = number | null
+
+/** A correlation needs at least this many complete pairs to mean anything. */
+export const MIN_POINTS_FOR_CORRELATION = 3
+
+/** Keeps only the positions where both series have a value. */
+export function completePairs(xs: MaybeNumber[], ys: MaybeNumber[]): [number[], number[]] {
+  const keptX: number[] = []
+  const keptY: number[] = []
+  const length = Math.min(xs.length, ys.length)
+  for (let i = 0; i < length; i++) {
+    const x = xs[i]
+    const y = ys[i]
+    if (x !== null && y !== null) {
+      keptX.push(x)
+      keptY.push(y)
+    }
+  }
+  return [keptX, keptY]
+}
+
+export function mean(values: MaybeNumber[]): number | null {
+  let sum = 0
+  let count = 0
+  for (const value of values) {
+    if (value === null) continue
+    sum += value
+    count++
+  }
+  return count === 0 ? null : sum / count
+}
+
+function isConstant(values: number[]): boolean {
+  return values.every((value) => value === values[0])
+}
+
+/** Sum of products of deviations from the mean: the shared core of r and the fit line. */
+function deviations(xs: number[], ys: number[]) {
+  const meanX = mean(xs) ?? 0
+  const meanY = mean(ys) ?? 0
+  let sxx = 0
+  let syy = 0
+  let sxy = 0
+  for (let i = 0; i < xs.length; i++) {
+    const dx = xs[i] - meanX
+    const dy = ys[i] - meanY
+    sxx += dx * dx
+    syy += dy * dy
+    sxy += dx * dy
+  }
+  return { meanX, meanY, sxx, syy, sxy }
+}
+
+/**
+ * Pearson correlation coefficient, from -1 to 1.
+ * Returns null with fewer than three complete pairs or when either series is constant.
+ */
+export function pearson(xs: MaybeNumber[], ys: MaybeNumber[]): number | null {
+  const [x, y] = completePairs(xs, ys)
+  if (x.length < MIN_POINTS_FOR_CORRELATION) return null
+  // Checked explicitly: floating-point error can leave a constant series with a tiny non-zero variance.
+  if (isConstant(x) || isConstant(y)) return null
+  const { sxx, syy, sxy } = deviations(x, y)
+  const r = sxy / Math.sqrt(sxx * syy)
+  return Math.max(-1, Math.min(1, r))
+}
+
+/** 1-based ranks; tied values share the average of the ranks they span. */
+export function ranks(values: number[]): number[] {
+  const order = values.map((_, index) => index).sort((a, b) => values[a] - values[b])
+  const result = new Array<number>(values.length)
+  let start = 0
+  while (start < order.length) {
+    let end = start
+    while (end + 1 < order.length && values[order[end + 1]] === values[order[start]]) end++
+    const sharedRank = (start + end) / 2 + 1
+    for (let i = start; i <= end; i++) result[order[i]] = sharedRank
+    start = end + 1
+  }
+  return result
+}
+
+/**
+ * Spearman rank correlation: Pearson on the ranks.
+ * Less sensitive than Pearson to a few extreme experiments.
+ */
+export function spearman(xs: MaybeNumber[], ys: MaybeNumber[]): number | null {
+  const [x, y] = completePairs(xs, ys)
+  return pearson(ranks(x), ranks(y))
+}
+
+export interface LinearFit {
+  slope: number
+  intercept: number
+}
+
+/** Least-squares line y = slope * x + intercept, or null when x does not vary. */
+export function linearFit(xs: MaybeNumber[], ys: MaybeNumber[]): LinearFit | null {
+  const [x, y] = completePairs(xs, ys)
+  if (x.length < 2 || isConstant(x)) return null
+  const { meanX, meanY, sxx, sxy } = deviations(x, y)
+  const slope = sxy / sxx
+  return { slope, intercept: meanY - slope * meanX }
+}
+
+export type CorrelationMethod = 'pearson' | 'spearman'
+
+export function correlation(
+  method: CorrelationMethod,
+  xs: MaybeNumber[],
+  ys: MaybeNumber[],
+): number | null {
+  return method === 'pearson' ? pearson(xs, ys) : spearman(xs, ys)
+}
