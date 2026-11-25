@@ -69,7 +69,9 @@ export function ExperimentTable() {
         </p>
       ) : (
         // The table scrolls sideways on narrow screens; the first column stays in place.
-        <div className="-mx-5 overflow-x-auto px-5">
+        // `relative` keeps the visually hidden labels inside the scroll area, so they
+        // cannot widen the page itself.
+        <div className="relative -mx-5 overflow-x-auto px-5">
           <table className="w-full border-separate border-spacing-0 text-xs">
             <thead>
               <tr>

@@ -3,6 +3,7 @@ import { CorrelationHeatmap } from '@/components/charts/CorrelationHeatmap'
 import { ScatterPlot } from '@/components/charts/ScatterPlot'
 import { ExperimentTable } from '@/components/ExperimentTable'
 import { OutputFilters } from '@/components/OutputFilters'
+import { ResetButton } from '@/components/ResetButton'
 import { SubsetProfile } from '@/components/SubsetProfile'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { loadDataset, type Dataset } from '@/data'
@@ -48,7 +49,10 @@ export default function App() {
                   {dataset.outputs.length} measured outputs
                 </p>
               </div>
-              <CommandBar />
+              <div className="flex min-w-[min(100%,22rem)] flex-1 items-start justify-end gap-2">
+                <CommandBar />
+                <ResetButton />
+              </div>
             </header>
 
             <main className="grid gap-4">

@@ -12,7 +12,8 @@ export const palette = {
   neutral: '#f0efec',
   negative: '#d03b3b',
 
-  sequentialLow: '#cde2fb',
+  /* Starts dark enough that the lowest point is still clearly visible on white. */
+  sequentialLow: '#86b6ef',
   sequentialHigh: '#0d366b',
   /** A paler stretch of the same blue for table cells, where text sits on top of the fill. */
   tintLow: '#e6f0fd',
