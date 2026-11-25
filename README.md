@@ -42,14 +42,16 @@ one updates the others.
    values; click or drag to open experiments.
 3. **Open an experiment.** One compact row per experiment. Opening a row shows
    its recipe and results, and any number can be open at once. Beside the
-   list, "What do they have in common?" ranks the inputs that set the open
-   (or filtered) experiments apart from the rest.
+   list, "What do they have in common?" shows the inputs where the open (or
+   filtered) experiments differ most from the average, each as a dot against
+   the overall average on that input's own scale. If the group is typical on
+   every input, it says so.
 
 Also:
 
-- **Filter by measurement.** Tucked behind one button so the first view stays
-  calm. Each output gets a range slider and a histogram; narrowing one shows,
-  in blue, where the remaining experiments fall on all the others.
+- **Filter by measurement.** A row above the three steps. Each output gets a
+  range slider and a histogram; narrowing one shows, in blue, where the
+  remaining experiments fall on all the others.
 - **Command bar** (`⌘K`). Type a request instead of clicking:
   `plot elongation vs polymer 4`, `compression set < 55`,
   `with plasticizer 2`, `colour by oven temperature`, `sort by viscosity`,
@@ -117,9 +119,9 @@ Data flows one way:
 - **Plain language over jargon.** The page never asks the reader to know what
   "r" is. It states the relationship in a sentence and explains correlation in
   a tooltip.
-- **Show less by default.** Filters, recipes and the comparison summary appear
-  when asked for. Selecting an experiment and opening its details are one
-  action, not two concepts.
+- **Show less by default.** An experiment is one line until it is opened, and
+  only then lists the ingredients it actually used. Selecting an experiment
+  and opening its details are one action, not two concepts.
 - **Axes stay fixed while you filter.** The scatterplot always spans the whole
   dataset and keeps filtered-out experiments as faint grey dots, so you can
   see where the remaining ones sit instead of watching the axes jump.

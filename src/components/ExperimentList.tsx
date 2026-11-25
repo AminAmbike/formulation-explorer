@@ -62,7 +62,7 @@ export function ExperimentList() {
       }
     >
       {/* The summary sits beside the list, so opening a row never shifts the list itself. */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         {rows.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">
             No experiments match the current filters.

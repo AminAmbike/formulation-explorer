@@ -1,5 +1,5 @@
-import { ChevronDown, SlidersHorizontal, X } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { X } from 'lucide-react'
+import { useMemo } from 'react'
 import { Histogram } from '@/components/charts/Histogram'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
@@ -13,77 +13,63 @@ import { column, describeRange } from '@/state/selectors'
 const BIN_COUNT = 12
 
 /**
- * A slim bar above the views it affects. It always shows how many
- * experiments are in play and which filters are active; the sliders
- * themselves stay tucked away until asked for, so the first thing a new
- * user sees is the data, not the controls.
+ * One range filter per measured output, in a single row above the views it
+ * affects. Every active filter (including ones set from the command bar on
+ * inputs, which have no slider here) appears as a removable chip.
  */
 export function FilterBar() {
   const { dataset, state, dispatch, visible } = useExplorer()
-  const panelId = useId()
   const activeKeys = Object.keys(state.filters)
-  // A link that arrives with filters should show where they came from.
-  const [isOpen, setIsOpen] = useState(activeKeys.length > 0)
 
   return (
-    <section className="rounded-2xl border border-border/80 bg-card shadow-xs">
-      <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 sm:px-5">
-        <Button
-          variant="outline"
-          size="sm"
-          aria-expanded={isOpen}
-          aria-controls={panelId}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <SlidersHorizontal aria-hidden />
-          Filter by measurement
-          <ChevronDown aria-hidden className={cn('transition-transform', isOpen && 'rotate-180')} />
-        </Button>
-
-        {activeKeys.map((key) => {
-          const variable = dataset.variable(key)
-          if (!variable) return null
-          return (
-            <Button
-              key={key}
-              variant="secondary"
-              size="sm"
-              aria-label={`Remove filter on ${key}`}
-              onClick={() => dispatch({ type: 'setFilter', key, range: null })}
-            >
-              <span>
-                {key}{' '}
-                <span className="tabular-nums">{describeRange(variable, state.filters[key])}</span>
-              </span>
-              <X aria-hidden />
-            </Button>
-          )
-        })}
-        {activeKeys.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'clearFilters' })}>
-            Clear filters
-          </Button>
-        )}
-
-        <p className="ml-auto text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground tabular-nums">{visible.length}</span> of{' '}
-          {dataset.experiments.length} experiments shown
-        </p>
-      </div>
-
-      {isOpen && (
-        <div id={panelId} className="border-t px-4 py-5 sm:px-6">
-          <p className="mb-4 text-sm text-muted-foreground">
-            Drag a handle to keep only the experiments that measured inside that range. Blue bars
-            are the experiments still shown.
+    <section className="rounded-2xl border border-border/80 bg-card p-5 shadow-xs sm:p-6">
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <h2 className="text-base leading-6 font-semibold tracking-tight">
+            Filter by measurement
+          </h2>
+          <p className="mt-1 text-sm text-pretty text-muted-foreground">
+            Drag a handle to keep only the experiments that measured inside that range.{' '}
+            <span className="font-semibold text-foreground tabular-nums">{visible.length}</span> of{' '}
+            {dataset.experiments.length} shown.
           </p>
-          <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
-            {dataset.outputs.map((output) => (
-              <RangeFilter key={output.key} variable={output} />
-            ))}
-          </div>
         </div>
-      )}
+
+        {activeKeys.length > 0 && (
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            {activeKeys.map((key) => {
+              const variable = dataset.variable(key)
+              if (!variable) return null
+              return (
+                <Button
+                  key={key}
+                  variant="secondary"
+                  size="sm"
+                  aria-label={`Remove filter on ${key}`}
+                  onClick={() => dispatch({ type: 'setFilter', key, range: null })}
+                >
+                  <span>
+                    {key}{' '}
+                    <span className="tabular-nums">
+                      {describeRange(variable, state.filters[key])}
+                    </span>
+                  </span>
+                  <X aria-hidden />
+                </Button>
+              )
+            })}
+            <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'clearFilters' })}>
+              Clear filters
+            </Button>
+          </div>
+        )}
+      </header>
+
+      <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-5">
+        {dataset.outputs.map((output) => (
+          <RangeFilter key={output.key} variable={output} />
+        ))}
+      </div>
     </section>
   )
 }
