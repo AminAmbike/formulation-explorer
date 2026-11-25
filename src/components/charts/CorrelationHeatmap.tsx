@@ -12,14 +12,21 @@ import { cn } from '@/lib/utils'
 import { useExplorer } from '@/state/explorerContext'
 import { correlationMatrix, noiseThreshold, readCorrelation } from '@/state/selectors'
 
-/** -1 is red, 0 is neutral grey, +1 is blue. */
+/** -1 is full red, +1 is full blue, and the colour thins out towards the card's own white at 0. */
 const correlationColor = scaleLinear<string>()
   .domain([-1, 0, 1])
-  .range([palette.negative, palette.neutral, palette.positive])
+  .range([palette.negative, palette.surface, palette.positive])
   .clamp(true)
 
-/** How much of its colour a cell keeps when its correlation is too weak to trust. */
-const WEAK_FADE = 0.3
+/** Even a correlation of zero keeps this much colour, so no cell ever looks empty. */
+const MIN_STRENGTH = 0.12
+/** The faintest a number is drawn, so weak values stay readable. */
+const MIN_TEXT_OPACITY = 0.55
+
+/** How saturated a cell is, from MIN_STRENGTH up to 1, following the size of r. */
+function saturation(r: number): number {
+  return MIN_STRENGTH + (1 - MIN_STRENGTH) * Math.abs(r)
+}
 
 const METHOD_HELP: Record<CorrelationMethod, string> = {
   pearson: 'Pearson: how close the experiments are to a straight line. The usual choice.',
@@ -39,9 +46,9 @@ const ARROW_STEPS: Record<string, [rowStep: number, columnStep: number]> = {
  * strongly coloured cells are the relationships worth looking at, and
  * clicking one opens it in the scatterplot.
  *
- * Only cells strong enough to trust carry a number, so the eye lands on the
- * handful that matter instead of on 95 figures. Every cell still gives its
- * value on hover and to screen readers.
+ * Every cell shows its value. How strong the colour and the number are
+ * follows the strength of the correlation, so weak links recede without
+ * disappearing, and links strong enough to trust are set in bold.
  */
 export function CorrelationHeatmap() {
   const { dataset, state, dispatch, visible } = useExplorer()
@@ -121,10 +128,10 @@ export function CorrelationHeatmap() {
                 </span>
                 {dataset.outputs.map((output, column) => {
                   const r = matrix[input.key][output.key]
-                  const isWeak = r === null || Math.abs(r) < threshold
-                  // Weak cells keep a hint of their colour but must not compete with real signal.
+                  const isTrusted = r !== null && Math.abs(r) >= threshold
+                  const strength = r === null ? 0 : saturation(r)
                   const fill =
-                    r === null ? palette.surface : correlationColor(isWeak ? r * WEAK_FADE : r)
+                    r === null ? palette.surface : correlationColor(Math.sign(r) * strength)
                   const plotted = isPlotted(input.key, output.key)
                   const isTabStop = plottedCellExists ? plotted : row === 0 && column === 0
                   const reading = readCorrelation(r, visible.length)
@@ -144,14 +151,17 @@ export function CorrelationHeatmap() {
                           }
                           style={{ backgroundColor: fill, color: readableInk(fill) }}
                           className={cn(
-                            'h-6 cursor-pointer rounded-md text-xs font-medium tabular-nums outline-none',
+                            'h-6 cursor-pointer rounded-md text-xs tabular-nums outline-none',
+                            isTrusted ? 'font-semibold' : 'font-normal',
                             'transition-shadow hover:ring-2 hover:ring-foreground/30 focus-visible:ring-2 focus-visible:ring-brand',
                             rowGap,
                             r === null && 'border border-dashed',
                             plotted && 'ring-2 ring-foreground ring-offset-1 hover:ring-foreground',
                           )}
                         >
-                          {!isWeak && formatCorrelation(r)}
+                          <span style={{ opacity: Math.max(MIN_TEXT_OPACITY, strength) }}>
+                            {formatCorrelation(r)}
+                          </span>
                         </button>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-64">
@@ -179,15 +189,15 @@ export function CorrelationHeatmap() {
             aria-hidden
             className="h-2 flex-1 rounded-full"
             style={{
-              background: `linear-gradient(to right, ${palette.negative}, ${palette.neutral}, ${palette.positive})`,
+              background: `linear-gradient(to right, ${palette.negative}, ${palette.surface}, ${palette.positive})`,
             }}
           />
           <span>Together</span>
         </div>
         <p className="text-pretty">
-          Numbers are correlations, from −1 to +1. A number is shown only where the link is strong
-          enough to trust with {visible.length} experiments (±{threshold.toFixed(2)} or beyond).
-          Hover any cell for its value.
+          Numbers are correlations, from −1 to +1. The stronger the link, the stronger the colour.
+          Bold numbers are at ±{threshold.toFixed(2)} or beyond, strong enough to trust with{' '}
+          {visible.length} experiments.
         </p>
         <div className="flex items-center gap-2">
           <span>Method</span>

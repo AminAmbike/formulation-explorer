@@ -3,6 +3,7 @@ import { CornerDownLeft, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EXAMPLE_QUERIES, parseQuery } from '@/lib/query/parseQuery'
 import { useExplorer } from '@/state/explorerContext'
+import { viewStateReducer, type ViewState } from '@/state/viewState'
 
 const ITEM_CLASS =
   'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm data-selected:bg-muted'
@@ -16,11 +17,15 @@ const ITEM_CLASS =
  * there is no second code path to keep in step.
  */
 export function CommandBar() {
-  const { dataset, dispatch } = useExplorer()
+  const { dataset, state, dispatch } = useExplorer()
   const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
-  const [lastApplied, setLastApplied] = useState('')
+  /** The last request that ran, and the view it produced. */
+  const [applied, setApplied] = useState<{ summary: string; state: ViewState } | null>(null)
+  // Shown only while the page is still in that view. Any later change (a slider, a click,
+  // Reset) produces a new state object, so the message disappears on its own.
+  const appliedSummary = applied !== null && applied.state === state ? applied.summary : ''
 
   const hasQuery = query.trim() !== ''
   const result = useMemo(
@@ -47,8 +52,11 @@ export function CommandBar() {
       setQuery(text)
       return
     }
-    parsed.actions.forEach(dispatch)
-    setLastApplied(parsed.summary)
+    // Work out the resulting view here and apply it in one step, so a request with
+    // several clauses is a single change and we know exactly which state it produced.
+    const next = parsed.actions.reduce(viewStateReducer, state)
+    dispatch({ type: 'replace', state: next })
+    setApplied({ summary: parsed.summary, state: next })
     setQuery('')
     inputRef.current?.blur()
   }
@@ -79,7 +87,7 @@ export function CommandBar() {
 
       {/* Says what the last request did, for sighted users and screen readers alike. */}
       <p role="status" className="mt-1 h-4 truncate text-xs text-muted-foreground">
-        {lastApplied && `Applied: ${lastApplied}`}
+        {appliedSummary && `Applied: ${appliedSummary}`}
       </p>
 
       {isOpen && (

@@ -32,8 +32,9 @@ The page reads top to bottom as three numbered steps, and anything you do in
 one updates the others.
 
 1. **Spot a relationship.** A grid of how strongly each input goes with each
-   output. Only links strong enough to trust at the current sample size carry
-   a number, so the handful that matter stand out. Click a cell to plot it.
+   output. The stronger the link, the stronger the colour, and links strong
+   enough to trust at the current sample size are set in bold. Click a cell to
+   plot it.
 2. **See the experiments behind it.** A scatterplot of any variable against
    any other. It says in words what it shows ("Strong positive relationship:
    Viscosity tends to be higher when Carbon Black High Grade is higher") and
@@ -63,7 +64,7 @@ Also:
 The source file does not state units. Ingredients are shown as percentages
 because the app checks that every recipe adds up to 100. The other units
 (°F, cP, min, MPa, %) are assumptions based on typical ranges, kept in one
-map in `src/data/variableMeta.ts` and stated in the page footer.
+map in `src/data/variableMeta.ts`.
 
 ## How it is built
 
@@ -105,8 +106,9 @@ Data flows one way:
   unit tested. A model could later be added behind the same `parseQuery`
   interface for free-form questions.
 - **Honest statistics for a small sample.** With 25 experiments a correlation
-  below about 0.4 could easily be chance, so those cells are faded and carry
-  no number, and the threshold rises as filters shrink the sample. Strength
+  below about 0.4 could easily be chance, so those cells are paler and only
+  the ones beyond it are bold, and the threshold rises as filters shrink the
+  sample. Strength
   and confidence are reported separately: a filtered view still says "strong
   positive relationship", and adds "with only 4 experiments, this could be
   chance". Pearson and Spearman are both offered because most ingredients are
@@ -134,8 +136,8 @@ Data flows one way:
   malformed file shows an error screen; a stale or hand-edited URL falls back
   to defaults.
 - **Accessibility.** The grid is one Tab stop navigated with arrow keys, each
-  experiment row has a real button with `aria-expanded`, and every cell
-  announces its value to screen readers even when no number is drawn.
+  experiment row has a real button with `aria-expanded`, and every coloured
+  cell also shows its number.
 
 ## What I would do next
 

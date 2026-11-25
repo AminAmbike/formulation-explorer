@@ -23,7 +23,7 @@ describe('luminance and contrast', () => {
 
 describe('readableInk', () => {
   it('uses dark text on light fills and white text on dark fills', () => {
-    expect(readableInk(palette.neutral)).toBe(palette.ink)
+    expect(readableInk(palette.tintLow)).toBe(palette.ink)
     expect(readableInk(palette.sequentialHigh)).toBe('#ffffff')
   })
 })

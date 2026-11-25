@@ -2,14 +2,14 @@
  * Every colour the charts use, in one place.
  *
  * Each colour has one job:
- *  - diverging (negative / neutral / positive) shows the sign of a correlation,
+ *  - diverging (negative and positive, thinning to the surface colour at zero)
+ *    shows the sign and strength of a correlation,
  *  - sequential (one hue, light to dark) shows "how much",
  *  - series is the default colour of a data point,
  *  - the rest is chart chrome that should stay in the background.
  */
 export const palette = {
   positive: '#256abf',
-  neutral: '#f0efec',
   negative: '#d03b3b',
 
   /* Starts dark enough that the lowest point is still clearly visible on white. */

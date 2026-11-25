@@ -66,12 +66,6 @@ export default function App() {
                 </div>
                 <ExperimentList />
               </main>
-
-              <footer className="mt-6 max-w-3xl text-xs text-pretty text-muted-foreground">
-                About the units: the source file does not state any. Ingredients are shown as
-                percentages because every recipe adds up to 100. All other units are assumptions
-                based on typical ranges for these properties.
-              </footer>
             </div>
           </HoverProvider>
         </ExplorerProvider>
