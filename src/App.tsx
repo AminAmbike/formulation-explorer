@@ -1,6 +1,8 @@
 import { CorrelationHeatmap } from '@/components/charts/CorrelationHeatmap'
 import { ScatterPlot } from '@/components/charts/ScatterPlot'
 import { ExperimentTable } from '@/components/ExperimentTable'
+import { OutputFilters } from '@/components/OutputFilters'
+import { SubsetProfile } from '@/components/SubsetProfile'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { loadDataset, type Dataset } from '@/data'
 import { ExplorerProvider } from '@/state/ExplorerProvider'
@@ -46,9 +48,14 @@ export default function App() {
             </header>
 
             <main className="grid gap-4">
+              {/* Filters sit above everything they affect. */}
+              <OutputFilters />
               <div className="grid items-start gap-4 xl:grid-cols-[minmax(460px,5fr)_minmax(0,7fr)]">
                 <CorrelationHeatmap />
-                <ScatterPlot />
+                <div className="grid gap-4">
+                  <ScatterPlot />
+                  <SubsetProfile />
+                </div>
               </div>
               <ExperimentTable />
             </main>

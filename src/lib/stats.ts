@@ -35,6 +35,34 @@ export function mean(values: MaybeNumber[]): number | null {
   return count === 0 ? null : sum / count
 }
 
+/** Sample standard deviation, or null with fewer than two values. */
+export function standardDeviation(values: MaybeNumber[]): number | null {
+  const present = values.filter((value): value is number => value !== null)
+  const average = mean(present)
+  if (average === null || present.length < 2) return null
+  const sumOfSquares = present.reduce((sum, value) => sum + (value - average) ** 2, 0)
+  return Math.sqrt(sumOfSquares / (present.length - 1))
+}
+
+/**
+ * Counts how many values fall into each of `binCount` equal-width bins
+ * across [min, max]. The top edge belongs to the last bin.
+ */
+export function histogram(
+  values: MaybeNumber[],
+  [min, max]: [number, number],
+  binCount: number,
+): number[] {
+  const counts = new Array<number>(binCount).fill(0)
+  const width = (max - min) / binCount
+  for (const value of values) {
+    if (value === null || value < min || value > max) continue
+    const index = width > 0 ? Math.min(binCount - 1, Math.floor((value - min) / width)) : 0
+    counts[index]++
+  }
+  return counts
+}
+
 function isConstant(values: number[]): boolean {
   return values.every((value) => value === values[0])
 }

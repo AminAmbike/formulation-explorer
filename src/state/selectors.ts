@@ -2,8 +2,9 @@
  * Pure functions that derive what the views show from the dataset and the
  * view state. Components call these inside useMemo.
  */
-import type { Dataset, Experiment } from '@/data'
-import { correlation, type CorrelationMethod } from '@/lib/stats'
+import type { Dataset, Experiment, Variable } from '@/data'
+import { formatValue } from '@/lib/format'
+import { correlation, mean, standardDeviation, type CorrelationMethod } from '@/lib/stats'
 import type { Range, SortOrder, ViewState } from './viewState'
 
 /** One variable's value for each experiment, in order. */
@@ -84,6 +85,64 @@ export function describeCorrelation(r: number | null, threshold: number): string
   if (size < threshold) return 'no clear relationship'
   const strength = size >= 0.7 ? 'strong' : 'moderate'
   return `${strength} ${r > 0 ? 'positive' : 'negative'}`
+}
+
+/** A filter range in words: "≥ 12.0", "≤ 3.50" or "2,400.0 – 2,800.0". */
+export function describeRange(variable: Variable, [low, high]: Range): string {
+  const [min, max] = variable.extent
+  if (low <= min) return `≤ ${formatValue(high, variable)}`
+  if (high >= max) return `≥ ${formatValue(low, variable)}`
+  return `${formatValue(low, variable)} – ${formatValue(high, variable)}`
+}
+
+export interface Subset {
+  experiments: Experiment[]
+  /** How the user narrowed the experiments down. */
+  source: 'selection' | 'filters'
+}
+
+/**
+ * The experiments the user has singled out: the selected ones if there are
+ * any, otherwise whatever the filters leave. Null when nothing is narrowed.
+ */
+export function activeSubset(
+  dataset: Dataset,
+  state: ViewState,
+  visible: Experiment[],
+): Subset | null {
+  const selected = new Set(state.selection)
+  const selection = visible.filter((experiment) => selected.has(experiment.id))
+  if (selection.length > 0) return { experiments: selection, source: 'selection' }
+  if (visible.length > 0 && visible.length < dataset.experiments.length) {
+    return { experiments: visible, source: 'filters' }
+  }
+  return null
+}
+
+export interface ProfileRow {
+  variable: Variable
+  subsetMean: number
+  overallMean: number
+  /** Subset mean minus overall mean, in overall standard deviations. */
+  shift: number
+}
+
+/**
+ * How a subset's recipe differs from the dataset as a whole: every input,
+ * ordered by how far its average in the subset sits from its overall average.
+ */
+export function subsetProfile(dataset: Dataset, subset: Experiment[]): ProfileRow[] {
+  const rows: ProfileRow[] = []
+  for (const variable of dataset.inputs) {
+    const overall = column(dataset.experiments, variable.key)
+    const overallMean = mean(overall)
+    const subsetMean = mean(column(subset, variable.key))
+    const spread = standardDeviation(overall)
+    // An input that never varies cannot set a subset apart.
+    if (overallMean === null || subsetMean === null || !spread) continue
+    rows.push({ variable, subsetMean, overallMean, shift: (subsetMean - overallMean) / spread })
+  }
+  return rows.sort((a, b) => Math.abs(b.shift) - Math.abs(a.shift))
 }
 
 /** The view shown on first load: the input/output pair with the strongest correlation. */

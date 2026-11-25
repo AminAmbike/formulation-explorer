@@ -18,6 +18,9 @@ const correlationColor = scaleLinear<string>()
   .range([palette.negative, palette.neutral, palette.positive])
   .clamp(true)
 
+/** How much of its colour a cell keeps when its correlation is too weak to trust. */
+const WEAK_FADE = 0.3
+
 const METHOD_HELP: Record<CorrelationMethod, string> = {
   pearson: 'Measures how close the points are to a straight line.',
   spearman: 'Compares rankings instead of raw values, so a few extreme experiments count for less.',
@@ -141,8 +144,10 @@ export function CorrelationHeatmap() {
                 </span>
                 {dataset.outputs.map((output, column) => {
                   const r = matrix[input.key][output.key]
-                  const fill = r === null ? palette.surface : correlationColor(r)
                   const isWeak = r === null || Math.abs(r) < threshold
+                  // Weak cells keep a hint of their colour but must not compete with real signal.
+                  const fill =
+                    r === null ? palette.surface : correlationColor(isWeak ? r * WEAK_FADE : r)
                   const plotted = isPlotted(input.key, output.key)
                   const isTabStop = plottedCellExists ? plotted : row === 0 && column === 0
                   return (
@@ -203,7 +208,7 @@ export function CorrelationHeatmap() {
           <span>together +1</span>
         </div>
         <p>
-          Based on {visible.length} of {dataset.experiments.length} experiments. Faded values are
+          Based on {visible.length} of {dataset.experiments.length} experiments. Faded cells are
           below ±{threshold.toFixed(2)}, too weak to tell apart from chance at this sample size.
         </p>
       </footer>

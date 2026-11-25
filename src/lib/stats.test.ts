@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { completePairs, linearFit, mean, pearson, ranks, spearman } from './stats'
+import {
+  completePairs,
+  histogram,
+  linearFit,
+  mean,
+  pearson,
+  ranks,
+  spearman,
+  standardDeviation,
+} from './stats'
 
 describe('completePairs', () => {
   it('drops positions where either value is missing', () => {
@@ -76,5 +85,31 @@ describe('linearFit', () => {
 
   it('is null when x does not vary', () => {
     expect(linearFit([2, 2, 2], [1, 2, 3])).toBeNull()
+  })
+})
+
+describe('standardDeviation', () => {
+  it('uses the sample formula', () => {
+    // Mean 5, squared deviations sum to 32, divided by n - 1 = 7.
+    expect(standardDeviation([2, 4, 4, 4, 5, 5, 7, 9])).toBeCloseTo(Math.sqrt(32 / 7))
+  })
+
+  it('is null with fewer than two values', () => {
+    expect(standardDeviation([3])).toBeNull()
+    expect(standardDeviation([3, null])).toBeNull()
+  })
+})
+
+describe('histogram', () => {
+  it('counts values per equal-width bin, with the maximum in the last bin', () => {
+    expect(histogram([0, 1, 2, 5, 9, 10], [0, 10], 5)).toEqual([2, 1, 1, 0, 2])
+  })
+
+  it('ignores missing and out-of-range values', () => {
+    expect(histogram([null, -1, 11, 5], [0, 10], 2)).toEqual([0, 1])
+  })
+
+  it('puts everything in the first bin when the range has no width', () => {
+    expect(histogram([4, 4], [4, 4], 3)).toEqual([2, 0, 0])
   })
 })

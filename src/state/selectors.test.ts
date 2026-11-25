@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { loadDataset, parseDataset } from '@/data'
 import {
+  activeSubset,
   applyFilters,
   correlationMatrix,
   describeCorrelation,
+  describeRange,
   initialViewState,
   noiseThreshold,
   sortExperiments,
+  subsetProfile,
 } from './selectors'
 
 const small = parseDataset({
@@ -82,6 +85,39 @@ describe('with the bundled dataset', () => {
   it('returns null cells when too few experiments are left', () => {
     const matrix = correlationMatrix(dataset, dataset.experiments.slice(0, 2), 'pearson')
     expect(matrix['Polymer 1']['Viscosity']).toBeNull()
+  })
+
+  it('describes a filter range relative to the full range', () => {
+    const viscosity = dataset.variable('Viscosity')!
+    const [min, max] = viscosity.extent
+    expect(describeRange(viscosity, [2500, max])).toBe('≥ 2,500.0')
+    expect(describeRange(viscosity, [min, 2500])).toBe('≤ 2,500.0')
+    expect(describeRange(viscosity, [2400, 2800])).toBe('2,400.0 – 2,800.0')
+  })
+
+  it('has no subset until the user narrows something', () => {
+    const state = initialViewState(dataset)
+    expect(activeSubset(dataset, state, dataset.experiments)).toBeNull()
+  })
+
+  it('prefers the selection over the filters as the subset', () => {
+    const state = initialViewState(dataset)
+    const visible = dataset.experiments.slice(0, 10)
+    expect(activeSubset(dataset, state, visible)).toMatchObject({ source: 'filters' })
+
+    const selection = [visible[0].id, dataset.experiments[20].id]
+    const subset = activeSubset(dataset, { ...state, selection }, visible)
+    // The second id is filtered out, so only the first counts.
+    expect(subset).toMatchObject({ source: 'selection', experiments: [visible[0]] })
+  })
+
+  it('ranks Plasticizer 2 first for the experiments with the lowest compression set', () => {
+    const lowest = applyFilters(dataset.experiments, { 'Compression Set': [0, 52] })
+    expect(lowest).toHaveLength(4)
+    const [top] = subsetProfile(dataset, lowest)
+    expect(top.variable.key).toBe('Plasticizer 2')
+    expect(top.shift).toBeGreaterThan(2)
+    expect(top.subsetMean).toBeGreaterThan(top.overallMean)
   })
 
   it('starts on the strongest relationship', () => {
