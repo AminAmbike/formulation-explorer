@@ -18,6 +18,12 @@ function toNumberOrNull(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
+/** Decimal places in the value as written, e.g. 3.22 → 2. Capped so float noise cannot blow it up. */
+function decimalPlaces(value: number): number {
+  const fraction = String(value).split('.')[1] ?? ''
+  return Math.min(fraction.length, 3)
+}
+
 /** "20170104_EXP_56" → { date: "2017-01-04", name: "EXP 56" }. */
 function parseId(id: string): Pick<Experiment, 'date' | 'name'> {
   const match = /^(\d{4})(\d{2})(\d{2})_(.+)$/.exec(id)
@@ -78,15 +84,17 @@ export function parseDataset(raw: unknown): Dataset {
   const describe = (key: string, kind: VariableKind): Variable => {
     let min = Infinity
     let max = -Infinity
+    let decimals = 0
     for (const experiment of experiments) {
       // An experiment that never mentions this variable counts as missing.
       const value = (experiment.values[key] ??= null)
       if (value === null) continue
       if (value < min) min = value
       if (value > max) max = value
+      decimals = Math.max(decimals, decimalPlaces(value))
     }
     const extent: Variable['extent'] = min <= max ? [min, max] : [0, 0]
-    return { key, kind, family: familyOf(key, kind), extent }
+    return { key, kind, family: familyOf(key, kind), extent, decimals }
   }
 
   const inputs = names.input.map((key) => describe(key, 'input'))

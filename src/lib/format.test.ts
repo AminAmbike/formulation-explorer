@@ -2,22 +2,24 @@ import { describe, expect, it } from 'vitest'
 import type { Variable } from '@/data'
 import { formatCorrelation, formatDate, formatValue } from './format'
 
-const variable = (extent: [number, number]): Variable => ({
+const variable = (decimals: number): Variable => ({
   key: 'x',
   kind: 'output',
   family: 'Measurement',
-  extent,
+  extent: [0, 1],
+  decimals,
 })
 
 describe('formatValue', () => {
-  it('picks decimals from the scale of the variable', () => {
-    expect(formatValue(2554.4, variable([2160, 3561]))).toBe('2,554')
-    expect(formatValue(61.94, variable([42, 71]))).toBe('61.9')
-    expect(formatValue(3.256, variable([2.8, 4]))).toBe('3.26')
+  it('uses the precision the variable was recorded with', () => {
+    expect(formatValue(2554.4, variable(1))).toBe('2,554.4')
+    expect(formatValue(62, variable(1))).toBe('62.0')
+    expect(formatValue(3.22, variable(2))).toBe('3.22')
+    expect(formatValue(375, variable(0))).toBe('375')
   })
 
   it('shows a dash for missing values', () => {
-    expect(formatValue(null, variable([0, 1]))).toBe('–')
+    expect(formatValue(null, variable(1))).toBe('–')
   })
 })
 

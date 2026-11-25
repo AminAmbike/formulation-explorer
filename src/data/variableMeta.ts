@@ -31,3 +31,12 @@ export function groupByFamily<T extends { family: string }>(
   }
   return groups
 }
+
+/**
+ * A variable's name without its family, for use under a family heading:
+ * "Polymer 3" → "3", "Carbon Black High Grade" → "High Grade".
+ */
+export function shortLabel(variable: { key: string; family: string }): string {
+  if (!variable.key.startsWith(variable.family)) return variable.key
+  return variable.key.slice(variable.family.length).trim() || variable.key
+}

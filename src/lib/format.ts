@@ -3,20 +3,12 @@ import type { Variable } from '@/data'
 /** Shown wherever a value is missing or undefined. */
 export const MISSING = '–'
 
-/** Decimal places that suit a variable's scale: 2554 / 61.9 / 3.26. */
-function decimalsFor(variable: Variable): number {
-  const largest = Math.max(Math.abs(variable.extent[0]), Math.abs(variable.extent[1]))
-  if (largest >= 1000) return 0
-  if (largest >= 10) return 1
-  return 2
-}
-
+/** Formats a value with as many decimals as the variable was recorded with. */
 export function formatValue(value: number | null | undefined, variable: Variable): string {
   if (value === null || value === undefined) return MISSING
-  const decimals = decimalsFor(variable)
   return value.toLocaleString('en-US', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    minimumFractionDigits: variable.decimals,
+    maximumFractionDigits: variable.decimals,
   })
 }
 

@@ -14,6 +14,9 @@ export const palette = {
 
   sequentialLow: '#cde2fb',
   sequentialHigh: '#0d366b',
+  /** A paler stretch of the same blue for table cells, where text sits on top of the fill. */
+  tintLow: '#e6f0fd',
+  tintHigh: '#6da7ec',
 
   series: '#2a78d6',
   /** Experiments hidden by a filter, kept as faint context. */

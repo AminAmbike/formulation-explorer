@@ -1,5 +1,6 @@
 import { CorrelationHeatmap } from '@/components/charts/CorrelationHeatmap'
 import { ScatterPlot } from '@/components/charts/ScatterPlot'
+import { ExperimentTable } from '@/components/ExperimentTable'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { loadDataset, type Dataset } from '@/data'
 import { ExplorerProvider } from '@/state/ExplorerProvider'
@@ -49,6 +50,7 @@ export default function App() {
                 <CorrelationHeatmap />
                 <ScatterPlot />
               </div>
+              <ExperimentTable />
             </main>
           </div>
         </HoverProvider>

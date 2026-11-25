@@ -10,6 +10,8 @@ export interface Variable {
   family: string
   /** Smallest and largest value across all experiments. */
   extent: [min: number, max: number]
+  /** Most decimal places any recorded value has (at most 3), used when displaying values. */
+  decimals: number
 }
 
 /** One row of the dataset. */

@@ -22,6 +22,7 @@ describe('parseDataset', () => {
       kind: 'input',
       family: 'Polymer',
       extent: [10, 30],
+      decimals: 0,
     })
     expect(dataset.variable('Viscosity')?.kind).toBe('output')
   })
@@ -64,6 +65,12 @@ describe('the bundled dataset', () => {
     expect(dataset.outputs).toHaveLength(5)
     const allValues = dataset.experiments.flatMap((e) => Object.values(e.values))
     expect(allValues).not.toContain(null)
+  })
+
+  it('records how precisely each variable was measured', () => {
+    expect(dataset.variable('Cure Time')?.decimals).toBe(2)
+    expect(dataset.variable('Viscosity')?.decimals).toBe(1)
+    expect(dataset.variable('Oven Temperature')?.decimals).toBe(0)
   })
 
   it('has unique experiment ids', () => {
