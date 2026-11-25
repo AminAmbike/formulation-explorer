@@ -4,6 +4,8 @@ An interactive view of the Uncountable front-end dataset: 25 rubber-formulation
 experiments, each with 19 inputs (18 ingredients plus oven temperature) and 5
 measured outputs.
 
+**Live:** https://formulation-explorer.vercel.app
+
 ![The correlation grid and scatterplot](docs/screenshot.jpg)
 
 ![An opened experiment with its recipe and results](docs/screenshot-experiments.jpg)
