@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { Variable } from '@/data'
-import { formatCorrelation, formatDate, formatValue } from './format'
+import { formatCorrelation, formatDate, formatValue, formatWithUnit, labelWithUnit } from './format'
 
-const variable = (decimals: number): Variable => ({
-  key: 'x',
+const variable = (decimals: number, unit = ''): Variable => ({
+  key: 'Strength',
   kind: 'output',
   family: 'Measurement',
   extent: [0, 1],
   decimals,
+  unit,
 })
 
 describe('formatValue', () => {
@@ -20,6 +21,25 @@ describe('formatValue', () => {
 
   it('shows a dash for missing values', () => {
     expect(formatValue(null, variable(1))).toBe('–')
+  })
+})
+
+describe('formatWithUnit', () => {
+  it('puts a percent sign against the number and other units after a space', () => {
+    expect(formatWithUnit(38.9, variable(1, '%'))).toBe('38.9%')
+    expect(formatWithUnit(13.8, variable(1, 'MPa'))).toBe('13.8\u00a0MPa')
+  })
+
+  it('adds nothing when the unit is unknown or the value is missing', () => {
+    expect(formatWithUnit(13.8, variable(1))).toBe('13.8')
+    expect(formatWithUnit(null, variable(1, 'MPa'))).toBe('–')
+  })
+})
+
+describe('labelWithUnit', () => {
+  it('appends the unit in brackets when there is one', () => {
+    expect(labelWithUnit(variable(1, 'MPa'))).toBe('Strength (MPa)')
+    expect(labelWithUnit(variable(1))).toBe('Strength')
   })
 })
 

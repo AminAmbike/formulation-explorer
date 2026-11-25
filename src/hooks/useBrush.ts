@@ -1,8 +1,13 @@
-import { useState, type PointerEvent } from 'react'
+import { useRef, useState, type PointerEvent } from 'react'
 import { rectFromCorners, type Point, type Rect } from '@/components/charts/geometry'
 
 /** A press that moves less than this many pixels counts as a click, not a drag. */
 const CLICK_TOLERANCE = 4
+
+interface Drag {
+  start: Point
+  current: Point
+}
 
 interface Options {
   /** Called with the dragged rectangle when the pointer is released. */
@@ -17,6 +22,12 @@ export function localPoint(event: PointerEvent<Element>): Point {
   return { x: event.clientX - box.left, y: event.clientY - box.top }
 }
 
+function hasMoved(drag: Drag): boolean {
+  return (
+    Math.hypot(drag.current.x - drag.start.x, drag.current.y - drag.start.y) > CLICK_TOLERANCE
+  )
+}
+
 /**
  * Click-and-drag rectangle selection.
  *
@@ -24,11 +35,17 @@ export function localPoint(event: PointerEvent<Element>): Point {
  * `rect` while it is not null. Coordinates are relative to that element.
  */
 export function useBrush({ onBrush, onClick }: Options) {
-  const [drag, setDrag] = useState<{ start: Point; current: Point } | null>(null)
+  // The ref is the source of truth for the handlers. Pointer events can arrive
+  // faster than React re-renders, so a handler reading only state could still
+  // see "no drag" on pointer-up and drop a quick drag entirely.
+  const dragRef = useRef<Drag | null>(null)
+  // The state copy exists only so the rectangle re-draws as the pointer moves.
+  const [drag, setDrag] = useState<Drag | null>(null)
 
-  const hasMoved =
-    drag !== null &&
-    Math.hypot(drag.current.x - drag.start.x, drag.current.y - drag.start.y) > CLICK_TOLERANCE
+  const update = (next: Drag | null) => {
+    dragRef.current = next
+    setDrag(next)
+  }
 
   const handlers = {
     onPointerDown(event: PointerEvent<Element>) {
@@ -36,26 +53,30 @@ export function useBrush({ onBrush, onClick }: Options) {
       // Capture keeps the drag alive when the pointer leaves the element.
       event.currentTarget.setPointerCapture(event.pointerId)
       const point = localPoint(event)
-      setDrag({ start: point, current: point })
+      update({ start: point, current: point })
     },
     onPointerMove(event: PointerEvent<Element>) {
-      if (drag === null) return
-      setDrag({ start: drag.start, current: localPoint(event) })
+      const active = dragRef.current
+      if (active === null) return
+      update({ start: active.start, current: localPoint(event) })
     },
-    onPointerUp() {
-      if (drag === null) return
-      if (hasMoved) onBrush(rectFromCorners(drag.start, drag.current))
-      else onClick(drag.start)
-      setDrag(null)
+    onPointerUp(event: PointerEvent<Element>) {
+      const active = dragRef.current
+      if (active === null) return
+      // Use the release position too, in case no move event arrived before it.
+      const finished = { start: active.start, current: localPoint(event) }
+      update(null)
+      if (hasMoved(finished)) onBrush(rectFromCorners(finished.start, finished.current))
+      else onClick(finished.start)
     },
     onPointerCancel() {
-      setDrag(null)
+      update(null)
     },
   }
 
   return {
     /** The rectangle being dragged, or null when there is no drag in progress. */
-    rect: hasMoved ? rectFromCorners(drag.start, drag.current) : null,
+    rect: drag !== null && hasMoved(drag) ? rectFromCorners(drag.start, drag.current) : null,
     isDragging: drag !== null,
     handlers,
   }

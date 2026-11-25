@@ -3,6 +3,9 @@ import type { VariableKind } from './types'
 /** Family shown for every measured output. */
 export const OUTPUT_FAMILY = 'Measurement'
 
+/** Family for settings that are not ingredients, such as oven temperature. */
+export const PROCESS_FAMILY = 'Process'
+
 /**
  * Families that cannot be derived from the name alone.
  * Everything else falls back to the name with its trailing number removed.
@@ -10,7 +13,34 @@ export const OUTPUT_FAMILY = 'Measurement'
 const FAMILY_OVERRIDES: Record<string, string> = {
   'Carbon Black High Grade': 'Carbon Black',
   'Carbon Black Low Grade': 'Carbon Black',
-  'Oven Temperature': 'Process',
+  'Oven Temperature': PROCESS_FAMILY,
+}
+
+/**
+ * The source file does not state units. These are assumptions based on the
+ * usual units and ranges for each property, kept in one place so they are
+ * easy to correct. Ingredient amounts are handled separately: see
+ * `unitOf` below.
+ */
+const ASSUMED_UNITS: Record<string, string> = {
+  'Oven Temperature': '°F',
+  Viscosity: 'cP',
+  'Cure Time': 'min',
+  Elongation: '%',
+  'Tensile Strength': 'MPa',
+  'Compression Set': '%',
+}
+
+/**
+ * The unit for a variable. Ingredients are percentages only when the data
+ * shows it: `ingredientsArePercentages` is true when every recipe adds up
+ * to 100.
+ */
+export function unitOf(name: string, family: string, ingredientsArePercentages: boolean): string {
+  const assumed = ASSUMED_UNITS[name]
+  if (assumed !== undefined) return assumed
+  const isIngredient = family !== OUTPUT_FAMILY && family !== PROCESS_FAMILY
+  return isIngredient && ingredientsArePercentages ? '%' : ''
 }
 
 /** "Polymer 3" → "Polymer", "Antioxidant" → "Antioxidant". */

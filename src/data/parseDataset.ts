@@ -1,5 +1,5 @@
 import type { Dataset, Experiment, Variable, VariableKind } from './types'
-import { familyOf } from './variableMeta'
+import { familyOf, OUTPUT_FAMILY, PROCESS_FAMILY, unitOf } from './variableMeta'
 
 /** Thrown when the raw JSON does not have the expected shape. */
 export class DatasetError extends Error {
@@ -81,6 +81,15 @@ export function parseDataset(raw: unknown): Dataset {
     throw new DatasetError('The dataset contains no experiments.')
   }
 
+  // If every recipe's ingredients add up to 100, the amounts are percentages.
+  const ingredientKeys = names.input.filter((key) => familyOf(key, 'input') !== PROCESS_FAMILY)
+  const ingredientsArePercentages =
+    ingredientKeys.length > 0 &&
+    experiments.every((experiment) => {
+      const total = ingredientKeys.reduce((sum, key) => sum + (experiment.values[key] ?? 0), 0)
+      return Math.abs(total - 100) < 0.5
+    })
+
   const describe = (key: string, kind: VariableKind): Variable => {
     let min = Infinity
     let max = -Infinity
@@ -94,7 +103,9 @@ export function parseDataset(raw: unknown): Dataset {
       decimals = Math.max(decimals, decimalPlaces(value))
     }
     const extent: Variable['extent'] = min <= max ? [min, max] : [0, 0]
-    return { key, kind, family: familyOf(key, kind), extent, decimals }
+    const family = kind === 'output' ? OUTPUT_FAMILY : familyOf(key, kind)
+    const unit = unitOf(key, family, ingredientsArePercentages)
+    return { key, kind, family, extent, decimals, unit }
   }
 
   const inputs = names.input.map((key) => describe(key, 'input'))

@@ -17,15 +17,16 @@ export function Histogram({ all, shown, label }: Props) {
   const tallest = Math.max(1, ...all)
 
   return (
-    <div role="img" aria-label={label} className="flex h-10 items-end gap-0.5">
+    <div role="img" aria-label={label} className="flex h-11 items-end gap-0.5 border-b">
       {all.map((count, index) => (
+        // Bars are rounded at the data end and square where they meet the baseline.
         <div
           key={index}
-          className="relative flex-1 rounded-t-[3px]"
+          className="relative flex-1 overflow-hidden rounded-t-sm"
           style={{ height: `${(count / tallest) * 100}%`, backgroundColor: palette.context }}
         >
           <div
-            className="absolute inset-x-0 bottom-0 rounded-t-[3px]"
+            className="absolute inset-x-0 bottom-0"
             style={{
               height: count > 0 ? `${(shown[index] / count) * 100}%` : 0,
               backgroundColor: palette.series,

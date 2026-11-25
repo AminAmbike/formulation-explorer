@@ -12,6 +12,8 @@ export interface Variable {
   extent: [min: number, max: number]
   /** Most decimal places any recorded value has (at most 3), used when displaying values. */
   decimals: number
+  /** Unit shown after values, e.g. "%" or "MPa". Empty when unknown. */
+  unit: string
 }
 
 /** One row of the dataset. */

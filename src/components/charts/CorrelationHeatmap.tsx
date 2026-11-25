@@ -10,7 +10,7 @@ import { palette } from '@/lib/palette'
 import type { CorrelationMethod } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { useExplorer } from '@/state/explorerContext'
-import { correlationMatrix, describeCorrelation, noiseThreshold } from '@/state/selectors'
+import { correlationMatrix, noiseThreshold, readCorrelation } from '@/state/selectors'
 
 /** -1 is red, 0 is neutral grey, +1 is blue. */
 const correlationColor = scaleLinear<string>()
@@ -22,8 +22,9 @@ const correlationColor = scaleLinear<string>()
 const WEAK_FADE = 0.3
 
 const METHOD_HELP: Record<CorrelationMethod, string> = {
-  pearson: 'Measures how close the points are to a straight line.',
-  spearman: 'Compares rankings instead of raw values, so a few extreme experiments count for less.',
+  pearson: 'Pearson: how close the experiments are to a straight line. The usual choice.',
+  spearman:
+    'Spearman: compares rankings instead of raw values, so a few extreme experiments count for less.',
 }
 
 const ARROW_STEPS: Record<string, [rowStep: number, columnStep: number]> = {
@@ -37,6 +38,10 @@ const ARROW_STEPS: Record<string, [rowStep: number, columnStep: number]> = {
  * Input × output grid of correlations. It is the map of the dataset: the
  * strongly coloured cells are the relationships worth looking at, and
  * clicking one opens it in the scatterplot.
+ *
+ * Only cells strong enough to trust carry a number, so the eye lands on the
+ * handful that matter instead of on 95 figures. Every cell still gives its
+ * value on hover and to screen readers.
  */
 export function CorrelationHeatmap() {
   const { dataset, state, dispatch, visible } = useExplorer()
@@ -74,42 +79,17 @@ export function CorrelationHeatmap() {
 
   return (
     <Panel
-      title="What moves each measurement?"
-      description="How strongly each input goes with each output. Click a cell to plot it."
-      actions={
-        <ToggleGroup
-          type="single"
-          size="sm"
-          variant="outline"
-          spacing={0}
-          value={state.method}
-          aria-label="Correlation method"
-          // Radix reports an empty string when the active item is clicked again; ignore that.
-          onValueChange={(method) =>
-            method && dispatch({ type: 'setMethod', method: method as CorrelationMethod })
-          }
-        >
-          {(['pearson', 'spearman'] as const).map((method) => (
-            // A native title, not a Tooltip: Radix Tooltip and Toggle both set data-state
-            // on the same element, which would hide the toggle's "on" styling.
-            <ToggleGroupItem
-              key={method}
-              value={method}
-              title={METHOD_HELP[method]}
-              className="capitalize data-[state=on]:bg-foreground data-[state=on]:text-background"
-            >
-              {method}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      }
+      step={1}
+      title="Spot a relationship"
+      description="Each cell links an input (row) to a measured output (column). Blue means they rise together, red means one falls as the other rises. Click a cell to plot it."
     >
       <div
         ref={gridRef}
         role="grid"
         aria-label="Correlation between inputs and outputs"
         onKeyDown={handleKeyDown}
-        className="grid grid-cols-[minmax(10.5rem,1fr)_repeat(var(--outputs),minmax(2.75rem,4.25rem))] gap-x-0.5"
+        // On phones the input names may truncate (the full name is in the tooltip) so the grid still fits.
+        className="grid grid-cols-[minmax(5.5rem,1fr)_repeat(var(--outputs),minmax(2.25rem,4.25rem))] gap-x-1 sm:grid-cols-[minmax(10.5rem,1fr)_repeat(var(--outputs),minmax(2.75rem,4.25rem))]"
         style={{ '--outputs': dataset.outputs.length } as React.CSSProperties}
       >
         <div role="row" className="contents">
@@ -118,7 +98,7 @@ export function CorrelationHeatmap() {
             <span
               key={output.key}
               role="columnheader"
-              className="self-end px-0.5 pb-1.5 text-center text-[11px] leading-tight font-medium text-balance text-muted-foreground"
+              className="self-end px-0.5 pb-2 text-center text-xs leading-tight font-medium text-balance"
             >
               {output.key}
             </span>
@@ -129,15 +109,12 @@ export function CorrelationHeatmap() {
           group.variables.map((input, indexInGroup) => {
             const row = rowOf.get(input.key) ?? 0
             // Extra space above the first row of each family separates the groups.
-            const startsGroup = indexInGroup === 0 && groupIndex > 0
+            const rowGap = indexInGroup === 0 && groupIndex > 0 ? 'mt-2.5' : 'mt-0.5'
             return (
               <div key={input.key} role="row" className="contents">
                 <span
                   role="rowheader"
-                  className={cn(
-                    'flex items-center truncate pr-3 text-[13px]',
-                    startsGroup ? 'mt-2' : 'mt-0.5',
-                  )}
+                  className={cn('flex items-center truncate pr-3 text-sm', rowGap)}
                   title={input.key}
                 >
                   {input.key}
@@ -150,6 +127,7 @@ export function CorrelationHeatmap() {
                     r === null ? palette.surface : correlationColor(isWeak ? r * WEAK_FADE : r)
                   const plotted = isPlotted(input.key, output.key)
                   const isTabStop = plottedCellExists ? plotted : row === 0 && column === 0
+                  const reading = readCorrelation(r, visible.length)
                   return (
                     <Tooltip key={output.key}>
                       <TooltipTrigger asChild>
@@ -160,31 +138,30 @@ export function CorrelationHeatmap() {
                           data-column={column}
                           tabIndex={isTabStop ? 0 : -1}
                           aria-pressed={plotted}
-                          aria-label={`${input.key} and ${output.key}: ${formatCorrelation(r)}, ${describeCorrelation(r, threshold)}`}
+                          aria-label={`${input.key} and ${output.key}: ${reading.headline}, correlation ${formatCorrelation(r)}`}
                           onClick={() =>
                             dispatch({ type: 'setAxes', x: input.key, y: output.key })
                           }
                           style={{ backgroundColor: fill, color: readableInk(fill) }}
                           className={cn(
-                            'h-7 cursor-pointer rounded-[5px] text-[11px] tabular-nums outline-none',
-                            'transition-shadow hover:ring-2 hover:ring-foreground/40 focus-visible:ring-2 focus-visible:ring-ring',
-                            startsGroup ? 'mt-2' : 'mt-0.5',
+                            'h-6 cursor-pointer rounded-md text-xs font-medium tabular-nums outline-none',
+                            'transition-shadow hover:ring-2 hover:ring-foreground/30 focus-visible:ring-2 focus-visible:ring-brand',
+                            rowGap,
                             r === null && 'border border-dashed',
-                            plotted && 'ring-2 ring-foreground hover:ring-foreground',
+                            plotted && 'ring-2 ring-foreground ring-offset-1 hover:ring-foreground',
                           )}
                         >
-                          <span className={isWeak ? 'opacity-45' : 'font-medium'}>
-                            {formatCorrelation(r)}
-                          </span>
+                          {!isWeak && formatCorrelation(r)}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>
+                      <TooltipContent className="max-w-64">
                         <p className="font-medium">
                           {input.key} × {output.key}
                         </p>
                         <p>
-                          r = {formatCorrelation(r)} · {describeCorrelation(r, threshold)}
+                          {reading.headline} · correlation {formatCorrelation(r)}
                         </p>
+                        {reading.caveat && <p className="opacity-80">{reading.caveat}.</p>}
                       </TooltipContent>
                     </Tooltip>
                   )
@@ -195,9 +172,9 @@ export function CorrelationHeatmap() {
         )}
       </div>
 
-      <footer className="mt-4 space-y-2 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <span>−1 opposite</span>
+      <footer className="mt-4 space-y-2.5 border-t pt-3.5 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2.5">
+          <span>Opposite</span>
           <span
             aria-hidden
             className="h-2 flex-1 rounded-full"
@@ -205,12 +182,41 @@ export function CorrelationHeatmap() {
               background: `linear-gradient(to right, ${palette.negative}, ${palette.neutral}, ${palette.positive})`,
             }}
           />
-          <span>together +1</span>
+          <span>Together</span>
         </div>
-        <p>
-          Based on {visible.length} of {dataset.experiments.length} experiments. Faded cells are
-          below ±{threshold.toFixed(2)}, too weak to tell apart from chance at this sample size.
+        <p className="text-pretty">
+          Numbers are correlations, from −1 to +1. A number is shown only where the link is strong
+          enough to trust with {visible.length} experiments (±{threshold.toFixed(2)} or beyond).
+          Hover any cell for its value.
         </p>
+        <div className="flex items-center gap-2">
+          <span>Method</span>
+          <ToggleGroup
+            type="single"
+            size="sm"
+            spacing={1}
+            value={state.method}
+            aria-label="Correlation method"
+            className="rounded-lg bg-muted p-0.5"
+            // Radix reports an empty string when the active item is clicked again; ignore that.
+            onValueChange={(method) =>
+              method && dispatch({ type: 'setMethod', method: method as CorrelationMethod })
+            }
+          >
+            {(['pearson', 'spearman'] as const).map((method) => (
+              // A native title, not a Tooltip: Radix Tooltip and Toggle both set data-state
+              // on the same element, which would hide the toggle's "on" styling.
+              <ToggleGroupItem
+                key={method}
+                value={method}
+                title={METHOD_HELP[method]}
+                className="h-6 min-w-0 rounded-md px-2.5 text-xs capitalize hover:bg-transparent data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-xs"
+              >
+                {method}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
       </footer>
     </Panel>
   )

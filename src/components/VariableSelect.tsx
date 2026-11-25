@@ -31,7 +31,7 @@ export function VariableSelect({ label, value, onChange, noneLabel }: Props) {
       value={value ?? NONE}
       onValueChange={(next) => onChange(next === NONE ? null : next)}
     >
-      <SelectTrigger size="sm" aria-label={label} className="max-w-56">
+      <SelectTrigger size="sm" aria-label={label} className="max-w-56 bg-card font-medium">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

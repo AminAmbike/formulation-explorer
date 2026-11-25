@@ -12,6 +12,19 @@ export function formatValue(value: number | null | undefined, variable: Variable
   })
 }
 
+/** A value with its unit: "38.9%", "425 °F", "2,554.4 cP". */
+export function formatWithUnit(value: number | null | undefined, variable: Variable): string {
+  const text = formatValue(value, variable)
+  if (text === MISSING || variable.unit === '') return text
+  // A percent sign sits against the number; other units are separated by a non-breaking space.
+  return variable.unit === '%' ? `${text}%` : `${text}\u00a0${variable.unit}`
+}
+
+/** A variable's name with its unit, for axis titles and headings: "Viscosity (cP)". */
+export function labelWithUnit(variable: Variable): string {
+  return variable.unit === '' ? variable.key : `${variable.key} (${variable.unit})`
+}
+
 /** "+0.88" / "−0.82", using a true minus sign so the columns align. */
 export function formatCorrelation(r: number | null): string {
   if (r === null) return MISSING

@@ -3,7 +3,7 @@
  * view state. Components call these inside useMemo.
  */
 import type { Dataset, Experiment, Variable } from '@/data'
-import { formatValue } from '@/lib/format'
+import { formatValue, formatWithUnit } from '@/lib/format'
 import { correlation, mean, standardDeviation, type CorrelationMethod } from '@/lib/stats'
 import type { Range, SortOrder, ViewState } from './viewState'
 
@@ -78,21 +78,37 @@ export function noiseThreshold(n: number): number {
   return n > 0 ? Math.min(1, 2 / Math.sqrt(n)) : 1
 }
 
-/** A plain-language reading of a correlation, e.g. "strong positive". */
-export function describeCorrelation(r: number | null, threshold: number): string {
-  if (r === null) return 'not enough data'
-  const size = Math.abs(r)
-  if (size < threshold) return 'no clear relationship'
-  const strength = size >= 0.7 ? 'strong' : 'moderate'
-  return `${strength} ${r > 0 ? 'positive' : 'negative'}`
+export interface CorrelationReading {
+  /** The strength and direction in words, e.g. "Strong positive relationship". */
+  headline: string
+  /** A warning when the sample is too small to trust the headline, otherwise null. */
+  caveat: string | null
 }
 
-/** A filter range in words: "≥ 12.0", "≤ 3.50" or "2,400.0 – 2,800.0". */
+/**
+ * A plain-language reading of a correlation coefficient.
+ *
+ * Strength and confidence are reported separately. The headline always
+ * describes the size of r; the caveat says when that size could easily have
+ * come from chance given how few experiments it is based on.
+ */
+export function readCorrelation(r: number | null, n: number): CorrelationReading {
+  if (r === null) return { headline: 'Not enough data to tell', caveat: null }
+  const size = Math.abs(r)
+  if (size < 0.2) return { headline: 'No clear relationship', caveat: null }
+  const strength = size >= 0.7 ? 'Strong' : size >= 0.4 ? 'Moderate' : 'Weak'
+  return {
+    headline: `${strength} ${r > 0 ? 'positive' : 'negative'} relationship`,
+    caveat: size < noiseThreshold(n) ? `With only ${n} experiments, this could be chance` : null,
+  }
+}
+
+/** A filter range in words: "≥ 12.0 MPa", "≤ 3.50 min" or "2,400.0 – 2,800.0 cP". */
 export function describeRange(variable: Variable, [low, high]: Range): string {
   const [min, max] = variable.extent
-  if (low <= min) return `≤ ${formatValue(high, variable)}`
-  if (high >= max) return `≥ ${formatValue(low, variable)}`
-  return `${formatValue(low, variable)} – ${formatValue(high, variable)}`
+  if (low <= min) return `≤ ${formatWithUnit(high, variable)}`
+  if (high >= max) return `≥ ${formatWithUnit(low, variable)}`
+  return `${formatValue(low, variable)} – ${formatWithUnit(high, variable)}`
 }
 
 export interface Subset {

@@ -104,7 +104,9 @@ describe('parseQuery', () => {
 
   it('says back what it understood', () => {
     const result = parseQuery('viscosity > 2500 and colour by temp', dataset)
-    expect(result.ok && result.summary).toBe('Keep Viscosity ≥ 2,500.1 · Colour by Oven Temperature')
+    expect(result.ok && result.summary).toBe(
+      'Keep Viscosity ≥ 2,500.1\u00a0cP · Colour by Oven Temperature',
+    )
   })
 
   it('offers each candidate when a name is ambiguous', () => {
@@ -121,7 +123,7 @@ describe('parseQuery', () => {
   it.each([
     ['hardness > 3', `I don't know a variable called "hardness".`],
     ['make it pretty', `I couldn't read "make it pretty".`],
-    ['viscosity > 9000', 'No experiment has Viscosity in that range. It runs from 2,160.8 to 3,561.2.'],
+    ['viscosity > 9000', 'No experiment has Viscosity in that range. It runs from 2,160.8 to 3,561.2\u00a0cP.'],
   ])('explains why "%s" fails', (query, message) => {
     expect(run(query)).toBe(message)
   })

@@ -4,10 +4,10 @@ import {
   activeSubset,
   applyFilters,
   correlationMatrix,
-  describeCorrelation,
   describeRange,
   initialViewState,
   noiseThreshold,
+  readCorrelation,
   sortExperiments,
   subsetProfile,
 } from './selectors'
@@ -60,15 +60,28 @@ describe('noiseThreshold', () => {
   })
 })
 
-describe('describeCorrelation', () => {
+describe('readCorrelation', () => {
   it.each([
-    [0.88, 'strong positive'],
-    [-0.82, 'strong negative'],
-    [0.55, 'moderate positive'],
-    [-0.2, 'no clear relationship'],
-    [null, 'not enough data'],
-  ])('reads %s as "%s"', (r, expected) => {
-    expect(describeCorrelation(r, 0.4)).toBe(expected)
+    [0.88, 'Strong positive relationship'],
+    [-0.82, 'Strong negative relationship'],
+    [0.55, 'Moderate positive relationship'],
+    [-0.14, 'No clear relationship'],
+    [null, 'Not enough data to tell'],
+  ])('reads %s from 25 experiments as "%s" with no caveat', (r, headline) => {
+    expect(readCorrelation(r, 25)).toEqual({ headline, caveat: null })
+  })
+
+  it('still names the strength, but adds a caveat, when it is below the noise threshold', () => {
+    expect(readCorrelation(0.3, 25)).toEqual({
+      headline: 'Weak positive relationship',
+      caveat: 'With only 25 experiments, this could be chance',
+    })
+    // The same r that is trustworthy at n = 25 is not at n = 7 (threshold 0.76).
+    expect(readCorrelation(-0.55, 7)).toEqual({
+      headline: 'Moderate negative relationship',
+      caveat: 'With only 7 experiments, this could be chance',
+    })
+    expect(readCorrelation(-0.92, 7).caveat).toBeNull()
   })
 })
 
@@ -90,9 +103,9 @@ describe('with the bundled dataset', () => {
   it('describes a filter range relative to the full range', () => {
     const viscosity = dataset.variable('Viscosity')!
     const [min, max] = viscosity.extent
-    expect(describeRange(viscosity, [2500, max])).toBe('≥ 2,500.0')
-    expect(describeRange(viscosity, [min, 2500])).toBe('≤ 2,500.0')
-    expect(describeRange(viscosity, [2400, 2800])).toBe('2,400.0 – 2,800.0')
+    expect(describeRange(viscosity, [2500, max])).toBe('≥ 2,500.0\u00a0cP')
+    expect(describeRange(viscosity, [min, 2500])).toBe('≤ 2,500.0\u00a0cP')
+    expect(describeRange(viscosity, [2400, 2800])).toBe('2,400.0 – 2,800.0\u00a0cP')
   })
 
   it('has no subset until the user narrows something', () => {

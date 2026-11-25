@@ -1,5 +1,5 @@
 import type { Dataset, Variable } from '@/data'
-import { formatValue } from '@/lib/format'
+import { formatValue, formatWithUnit } from '@/lib/format'
 import { describeRange } from '@/state/selectors'
 import type { Action, Range } from '@/state/viewState'
 import { matchVariable } from './matchVariable'
@@ -224,7 +224,7 @@ function filterStep(variable: Variable, range: Range): Step {
   const [min, max] = variable.extent
   if (range[0] > max || range[1] < min) {
     throw new QueryError(
-      `No experiment has ${variable.key} in that range. It runs from ${formatValue(min, variable)} to ${formatValue(max, variable)}.`,
+      `No experiment has ${variable.key} in that range. It runs from ${formatValue(min, variable)} to ${formatWithUnit(max, variable)}.`,
     )
   }
   return {

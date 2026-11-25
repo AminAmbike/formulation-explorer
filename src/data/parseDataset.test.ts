@@ -27,6 +27,13 @@ describe('parseDataset', () => {
     expect(dataset.variable('Viscosity')?.kind).toBe('output')
   })
 
+  it('does not assume percentages when recipes do not add up to 100', () => {
+    const dataset = parseDataset({
+      a: experiment({ 'Polymer 1': 10, 'Polymer 2': 20 }, { Viscosity: 1 }),
+    })
+    expect(dataset.variable('Polymer 1')?.unit).toBe('')
+  })
+
   it('keeps ids that have no date prefix', () => {
     const dataset = parseDataset({ 'batch-a': experiment({ A: 1 }, { B: 2 }) })
     expect(dataset.experiments[0]).toMatchObject({ id: 'batch-a', name: 'batch-a', date: null })
@@ -71,6 +78,13 @@ describe('the bundled dataset', () => {
     expect(dataset.variable('Cure Time')?.decimals).toBe(2)
     expect(dataset.variable('Viscosity')?.decimals).toBe(1)
     expect(dataset.variable('Oven Temperature')?.decimals).toBe(0)
+  })
+
+  it('labels ingredients as percentages because every recipe adds up to 100', () => {
+    expect(dataset.variable('Polymer 1')?.unit).toBe('%')
+    expect(dataset.variable('Curing Agent 2')?.unit).toBe('%')
+    expect(dataset.variable('Oven Temperature')?.unit).toBe('°F')
+    expect(dataset.variable('Tensile Strength')?.unit).toBe('MPa')
   })
 
   it('has unique experiment ids', () => {
