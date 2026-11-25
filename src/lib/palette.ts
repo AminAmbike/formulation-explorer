@@ -1,0 +1,28 @@
+/**
+ * Every colour the charts use, in one place.
+ *
+ * Each colour has one job:
+ *  - diverging (negative / neutral / positive) shows the sign of a correlation,
+ *  - sequential (one hue, light to dark) shows "how much",
+ *  - series is the default colour of a data point,
+ *  - the rest is chart chrome that should stay in the background.
+ */
+export const palette = {
+  positive: '#256abf',
+  neutral: '#f0efec',
+  negative: '#d03b3b',
+
+  sequentialLow: '#cde2fb',
+  sequentialHigh: '#0d366b',
+
+  series: '#2a78d6',
+  /** Experiments hidden by a filter, kept as faint context. */
+  context: '#d6d5cf',
+
+  surface: '#ffffff',
+  ink: '#0b0b0b',
+  inkSecondary: '#52514e',
+  inkMuted: '#898781',
+  grid: '#e1e0d9',
+  axis: '#c3c2b7',
+} as const

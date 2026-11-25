@@ -1,3 +1,58 @@
+import { CorrelationHeatmap } from '@/components/charts/CorrelationHeatmap'
+import { ScatterPlot } from '@/components/charts/ScatterPlot'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { loadDataset, type Dataset } from '@/data'
+import { ExplorerProvider } from '@/state/ExplorerProvider'
+import { HoverProvider } from '@/state/HoverProvider'
+
+type LoadResult = { dataset: Dataset } | { error: string }
+
+function tryLoadDataset(): LoadResult {
+  try {
+    return { dataset: loadDataset() }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+/** The dataset ships with the app, so it is parsed once when the module loads. */
+const result = tryLoadDataset()
+
 export default function App() {
-  return <main className="p-8 text-lg">Formulation Explorer</main>
+
+  if ('error' in result) {
+    return (
+      <main className="mx-auto max-w-lg p-10">
+        <h1 className="text-lg font-semibold">The dataset could not be loaded</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{result.error}</p>
+      </main>
+    )
+  }
+
+  const { dataset } = result
+
+  return (
+    <TooltipProvider delayDuration={150}>
+      <ExplorerProvider dataset={dataset}>
+        <HoverProvider>
+          <div className="mx-auto max-w-[1440px] px-6 pb-16">
+            <header className="py-6">
+              <h1 className="text-xl font-semibold tracking-tight">Formulation Explorer</h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {dataset.experiments.length} experiments · {dataset.inputs.length} inputs ·{' '}
+                {dataset.outputs.length} measured outputs
+              </p>
+            </header>
+
+            <main className="grid gap-4">
+              <div className="grid items-start gap-4 xl:grid-cols-[minmax(460px,5fr)_minmax(0,7fr)]">
+                <CorrelationHeatmap />
+                <ScatterPlot />
+              </div>
+            </main>
+          </div>
+        </HoverProvider>
+      </ExplorerProvider>
+    </TooltipProvider>
+  )
 }

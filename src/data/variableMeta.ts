@@ -18,3 +18,16 @@ export function familyOf(name: string, kind: VariableKind): string {
   if (kind === 'output') return OUTPUT_FAMILY
   return FAMILY_OVERRIDES[name] ?? name.replace(/\s+\d+$/, '')
 }
+
+/** Splits a list into runs of the same family, keeping the original order. */
+export function groupByFamily<T extends { family: string }>(
+  variables: T[],
+): { family: string; variables: T[] }[] {
+  const groups: { family: string; variables: T[] }[] = []
+  for (const variable of variables) {
+    const last = groups.at(-1)
+    if (last && last.family === variable.family) last.variables.push(variable)
+    else groups.push({ family: variable.family, variables: [variable] })
+  }
+  return groups
+}
