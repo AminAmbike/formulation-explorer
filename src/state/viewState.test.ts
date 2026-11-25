@@ -8,7 +8,6 @@ const base: ViewState = {
   filters: {},
   selection: [],
   sort: { key: 'date', direction: 'asc' },
-  method: 'pearson',
 }
 
 describe('viewStateReducer', () => {

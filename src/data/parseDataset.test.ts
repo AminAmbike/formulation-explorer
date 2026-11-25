@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { correlation } from '@/lib/stats'
+import { pearson } from '@/lib/stats'
 import { DatasetError, loadDataset, parseDataset } from './index'
 
 const experiment = (inputs: object, outputs: object) => ({ inputs, outputs })
@@ -64,7 +64,7 @@ describe('parseDataset', () => {
 describe('the bundled dataset', () => {
   const dataset = loadDataset()
   const column = (key: string) => dataset.experiments.map((e) => e.values[key])
-  const r = (x: string, y: string) => correlation('pearson', column(x), column(y))
+  const r = (x: string, y: string) => pearson(column(x), column(y))
 
   it('has 25 experiments, 19 inputs and 5 outputs, with no missing values', () => {
     expect(dataset.experiments).toHaveLength(25)

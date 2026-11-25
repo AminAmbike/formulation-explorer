@@ -98,30 +98,6 @@ export function pearson(xs: MaybeNumber[], ys: MaybeNumber[]): number | null {
   return Math.max(-1, Math.min(1, r))
 }
 
-/** 1-based ranks; tied values share the average of the ranks they span. */
-export function ranks(values: number[]): number[] {
-  const order = values.map((_, index) => index).sort((a, b) => values[a] - values[b])
-  const result = new Array<number>(values.length)
-  let start = 0
-  while (start < order.length) {
-    let end = start
-    while (end + 1 < order.length && values[order[end + 1]] === values[order[start]]) end++
-    const sharedRank = (start + end) / 2 + 1
-    for (let i = start; i <= end; i++) result[order[i]] = sharedRank
-    start = end + 1
-  }
-  return result
-}
-
-/**
- * Spearman rank correlation: Pearson on the ranks.
- * Less sensitive than Pearson to a few extreme experiments.
- */
-export function spearman(xs: MaybeNumber[], ys: MaybeNumber[]): number | null {
-  const [x, y] = completePairs(xs, ys)
-  return pearson(ranks(x), ranks(y))
-}
-
 export interface LinearFit {
   slope: number
   intercept: number
@@ -134,14 +110,4 @@ export function linearFit(xs: MaybeNumber[], ys: MaybeNumber[]): LinearFit | nul
   const { meanX, meanY, sxx, sxy } = deviations(x, y)
   const slope = sxy / sxx
   return { slope, intercept: meanY - slope * meanX }
-}
-
-export type CorrelationMethod = 'pearson' | 'spearman'
-
-export function correlation(
-  method: CorrelationMethod,
-  xs: MaybeNumber[],
-  ys: MaybeNumber[],
-): number | null {
-  return method === 'pearson' ? pearson(xs, ys) : spearman(xs, ys)
 }

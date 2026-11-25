@@ -5,8 +5,6 @@ import {
   linearFit,
   mean,
   pearson,
-  ranks,
-  spearman,
   standardDeviation,
 } from './stats'
 
@@ -50,29 +48,6 @@ describe('pearson', () => {
     expect(pearson([5, 5, 5], [1, 2, 3])).toBeNull()
     // 0.1 three times has a non-zero floating-point variance; it must still count as constant.
     expect(pearson([1, 2, 3], [0.1, 0.1, 0.1])).toBeNull()
-  })
-})
-
-describe('ranks', () => {
-  it('gives tied values the average of their ranks', () => {
-    expect(ranks([10, 20, 20, 30])).toEqual([1, 2.5, 2.5, 4])
-  })
-
-  it('keeps the original order of the input', () => {
-    expect(ranks([30, 10, 20])).toEqual([3, 1, 2])
-  })
-})
-
-describe('spearman', () => {
-  it('is 1 for any increasing relationship, even a curved one', () => {
-    expect(spearman([1, 2, 3, 4], [1, 4, 9, 16])).toBeCloseTo(1)
-  })
-
-  it('is less affected by one extreme point than pearson', () => {
-    const xs = [1, 2, 3, 4, 100]
-    const ys = [2, 1, 4, 3, 5]
-    expect(spearman(xs, ys)).toBeCloseTo(0.8)
-    expect(pearson(xs, ys)).not.toBeCloseTo(0.8)
   })
 })
 

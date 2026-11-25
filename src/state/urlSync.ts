@@ -16,7 +16,6 @@ export function encodeViewState(state: ViewState, defaults: ViewState): string {
   if (state.x !== defaults.x) params.set('x', state.x)
   if (state.y !== defaults.y) params.set('y', state.y)
   if (state.colorBy !== null) params.set('color', state.colorBy)
-  if (state.method !== defaults.method) params.set('method', state.method)
   if (state.sort.key !== defaults.sort.key || state.sort.direction !== defaults.sort.direction) {
     params.set('sort', [state.sort.key, state.sort.direction].join(SEPARATOR))
   }
@@ -57,7 +56,6 @@ export function decodeViewState(search: string, dataset: Dataset, defaults: View
     x: variableOr(params.get('x'), defaults.x),
     y: variableOr(params.get('y'), defaults.y),
     colorBy: variableOr(params.get('color'), null),
-    method: params.get('method') === 'spearman' ? 'spearman' : defaults.method,
     sort: sortIsValid ? { key: sortKey, direction: sortDirection } : defaults.sort,
     filters,
     selection: params.getAll('selected').filter((id) => knownIds.has(id)),

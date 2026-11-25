@@ -19,7 +19,6 @@ describe('urlSync', () => {
       x: 'Polymer 4',
       y: 'Elongation',
       colorBy: 'Oven Temperature',
-      method: 'spearman',
       sort: { key: 'Viscosity', direction: 'desc' },
       filters: { 'Compression Set': [42.7, 59.9], 'Plasticizer 2': [0.1, 23.1] },
       selection: ['20170111_EXP_12', '20170116_EXP_41'],
@@ -29,7 +28,7 @@ describe('urlSync', () => {
 
   it('falls back to defaults for anything it does not recognise', () => {
     const state = decode(
-      'x=Unknown&y=Elongation&color=Nope&method=kendall&sort=Viscosity~sideways' +
+      'x=Unknown&y=Elongation&color=Nope&sort=Viscosity~sideways' +
         '&filter=Unknown~1~2&filter=Viscosity~abc~3000&filter=Viscosity~~3000' +
         '&filter=Cure+Time~4~3&filter=Elongation~70~90&selected=not-an-experiment',
     )

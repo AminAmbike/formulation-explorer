@@ -10,7 +10,7 @@ import { localPoint, useBrush } from '@/hooks/useBrush'
 import { useElementSize } from '@/hooks/useElementSize'
 import { formatCorrelation, formatDate, formatWithUnit, labelWithUnit } from '@/lib/format'
 import { palette } from '@/lib/palette'
-import { correlation, linearFit } from '@/lib/stats'
+import { linearFit, pearson } from '@/lib/stats'
 import { useExplorer } from '@/state/explorerContext'
 import { useHover } from '@/state/hoverContext'
 import { column, readCorrelation } from '@/state/selectors'
@@ -46,7 +46,7 @@ export function ScatterPlot({ className }: { className?: string }) {
 
   if (!xVariable || !yVariable) return null
 
-  const r = correlation(state.method, column(visible, state.x), column(visible, state.y))
+  const r = pearson(column(visible, state.x), column(visible, state.y))
   const selected = new Set(state.selection)
   const openCount = visible.filter((experiment) => selected.has(experiment.id)).length
   const hasFilteredOut = visible.length < dataset.experiments.length

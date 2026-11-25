@@ -4,7 +4,7 @@
  */
 import type { Dataset, Experiment, Variable } from '@/data'
 import { formatValue, formatWithUnit } from '@/lib/format'
-import { correlation, mean, standardDeviation, type CorrelationMethod } from '@/lib/stats'
+import { mean, pearson, standardDeviation } from '@/lib/stats'
 import type { Range, SortOrder, ViewState } from './viewState'
 
 /** One variable's value for each experiment, in order. */
@@ -53,7 +53,6 @@ export type CorrelationMatrix = Record<string, Record<string, number | null>>
 export function correlationMatrix(
   dataset: Dataset,
   experiments: Experiment[],
-  method: CorrelationMethod,
 ): CorrelationMatrix {
   const outputColumns = dataset.outputs.map(
     (output) => [output.key, column(experiments, output.key)] as const,
@@ -63,7 +62,7 @@ export function correlationMatrix(
     const inputColumn = column(experiments, input.key)
     const row: Record<string, number | null> = {}
     for (const [outputKey, outputColumn] of outputColumns) {
-      row[outputKey] = correlation(method, inputColumn, outputColumn)
+      row[outputKey] = pearson(inputColumn, outputColumn)
     }
     matrix[input.key] = row
   }
@@ -163,7 +162,7 @@ export function subsetProfile(dataset: Dataset, subset: Experiment[]): ProfileRo
 
 /** The view shown on first load: the input/output pair with the strongest correlation. */
 export function initialViewState(dataset: Dataset): ViewState {
-  const matrix = correlationMatrix(dataset, dataset.experiments, 'pearson')
+  const matrix = correlationMatrix(dataset, dataset.experiments)
   let x = dataset.inputs[0]?.key ?? ''
   let y = dataset.outputs[0]?.key ?? ''
   let strongest = -1
@@ -186,6 +185,5 @@ export function initialViewState(dataset: Dataset): ViewState {
     filters: {},
     selection: [],
     sort: { key: 'date', direction: 'asc' },
-    method: 'pearson',
   }
 }

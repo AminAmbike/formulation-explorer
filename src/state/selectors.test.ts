@@ -89,14 +89,14 @@ describe('with the bundled dataset', () => {
   const dataset = loadDataset()
 
   it('builds a full input × output matrix', () => {
-    const matrix = correlationMatrix(dataset, dataset.experiments, 'pearson')
+    const matrix = correlationMatrix(dataset, dataset.experiments)
     expect(Object.keys(matrix)).toHaveLength(19)
     expect(Object.keys(matrix['Polymer 1'])).toHaveLength(5)
     expect(matrix['Polymer 4']['Elongation']).toBeCloseTo(-0.82, 2)
   })
 
   it('returns null cells when too few experiments are left', () => {
-    const matrix = correlationMatrix(dataset, dataset.experiments.slice(0, 2), 'pearson')
+    const matrix = correlationMatrix(dataset, dataset.experiments.slice(0, 2))
     expect(matrix['Polymer 1']['Viscosity']).toBeNull()
   })
 

@@ -1,5 +1,3 @@
-import type { CorrelationMethod } from '@/lib/stats'
-
 /** An inclusive numeric range, used for filters. */
 export type Range = [min: number, max: number]
 
@@ -28,7 +26,6 @@ export interface ViewState {
   /** Ids of the experiments the user has picked out. */
   selection: string[]
   sort: SortOrder
-  method: CorrelationMethod
 }
 
 export type Action =
@@ -45,7 +42,6 @@ export type Action =
   | { type: 'setSort'; sort: SortOrder }
   /** Sort by this column, or flip the direction if it is already the sort column. */
   | { type: 'toggleSort'; key: string }
-  | { type: 'setMethod'; method: CorrelationMethod }
   /** Swap in a whole state: used by Reset and when restoring from the URL. */
   | { type: 'replace'; state: ViewState }
 
@@ -96,9 +92,6 @@ export function viewStateReducer(state: ViewState, action: Action): ViewState {
       // A new column starts with the largest values on top, which is usually what you want to see.
       return { ...state, sort: { key: action.key, direction: isSameColumn ? flipped : 'desc' } }
     }
-
-    case 'setMethod':
-      return { ...state, method: action.method }
 
     case 'replace':
       return action.state

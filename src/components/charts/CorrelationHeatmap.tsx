@@ -1,13 +1,11 @@
 import { scaleLinear } from 'd3-scale'
 import { useMemo, useRef, type KeyboardEvent } from 'react'
 import { Panel } from '@/components/Panel'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { groupByFamily } from '@/data'
 import { readableInk } from '@/lib/color'
 import { formatCorrelation } from '@/lib/format'
 import { palette } from '@/lib/palette'
-import type { CorrelationMethod } from '@/lib/stats'
 import { cn } from '@/lib/utils'
 import { useExplorer } from '@/state/explorerContext'
 import { correlationMatrix, noiseThreshold, readCorrelation } from '@/state/selectors'
@@ -26,12 +24,6 @@ const MIN_TEXT_OPACITY = 0.55
 /** How saturated a cell is, from MIN_STRENGTH up to 1, following the size of r. */
 function saturation(r: number): number {
   return MIN_STRENGTH + (1 - MIN_STRENGTH) * Math.abs(r)
-}
-
-const METHOD_HELP: Record<CorrelationMethod, string> = {
-  pearson: 'Pearson: how close the experiments are to a straight line. The usual choice.',
-  spearman:
-    'Spearman: compares rankings instead of raw values, so a few extreme experiments count for less.',
 }
 
 const ARROW_STEPS: Record<string, [rowStep: number, columnStep: number]> = {
@@ -54,10 +46,7 @@ export function CorrelationHeatmap() {
   const { dataset, state, dispatch, visible } = useExplorer()
   const gridRef = useRef<HTMLDivElement>(null)
 
-  const matrix = useMemo(
-    () => correlationMatrix(dataset, visible, state.method),
-    [dataset, visible, state.method],
-  )
+  const matrix = useMemo(() => correlationMatrix(dataset, visible), [dataset, visible])
   const threshold = noiseThreshold(visible.length)
   const families = useMemo(() => groupByFamily(dataset.inputs), [dataset])
 
@@ -199,34 +188,6 @@ export function CorrelationHeatmap() {
           Bold numbers are at ±{threshold.toFixed(2)} or beyond, strong enough to trust with{' '}
           {visible.length} experiments.
         </p>
-        <div className="flex items-center gap-2">
-          <span>Method</span>
-          <ToggleGroup
-            type="single"
-            size="sm"
-            spacing={1}
-            value={state.method}
-            aria-label="Correlation method"
-            className="rounded-lg bg-muted p-0.5"
-            // Radix reports an empty string when the active item is clicked again; ignore that.
-            onValueChange={(method) =>
-              method && dispatch({ type: 'setMethod', method: method as CorrelationMethod })
-            }
-          >
-            {(['pearson', 'spearman'] as const).map((method) => (
-              // A native title, not a Tooltip: Radix Tooltip and Toggle both set data-state
-              // on the same element, which would hide the toggle's "on" styling.
-              <ToggleGroupItem
-                key={method}
-                value={method}
-                title={METHOD_HELP[method]}
-                className="h-6 min-w-0 rounded-md px-2.5 text-xs capitalize hover:bg-transparent data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-xs"
-              >
-                {method}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
       </footer>
     </Panel>
   )

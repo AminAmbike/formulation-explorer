@@ -90,8 +90,7 @@ Data flows one way:
    and their families are derived from the data, so another dataset with the
    same shape loads without code changes.
 2. A single `ViewState` object holds everything the user can change: axes,
-   colour, filters, selection, sort and correlation method. It changes only
-   through a reducer.
+   colour, filters, selection and sort. It changes only through a reducer.
 3. Pure functions in `state/selectors.ts` derive what each view shows.
 4. Views read the state and dispatch actions. None of them talks to another
    view directly.
@@ -113,9 +112,9 @@ Data flows one way:
   sample. Strength
   and confidence are reported separately: a filtered view still says "strong
   positive relationship", and adds "with only 4 experiments, this could be
-  chance". Pearson and Spearman are both offered because most ingredients are
-  zero in most experiments, which makes Pearson sensitive to a few extreme
-  recipes.
+  chance". The correlation is Pearson's. Most ingredients are zero in most
+  experiments, which makes it sensitive to a few extreme recipes, and that is
+  why every cell opens the scatterplot behind it.
 - **Plain language over jargon.** The page never asks the reader to know what
   "r" is. It states the relationship in a sentence and explains correlation in
   a tooltip.
