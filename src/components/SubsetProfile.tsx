@@ -40,7 +40,7 @@ export function SubsetProfile() {
             <li key={row.variable.key}>
               <button
                 type="button"
-                onClick={() => dispatch({ type: 'setAxes', x: row.variable.key, y: state.y })}
+                onClick={() => dispatch({ type: 'setX', key: row.variable.key })}
                 className="grid w-full cursor-pointer grid-cols-[11rem_minmax(4rem,1fr)_auto] items-center gap-3 rounded-md px-1.5 py-1 text-left text-[13px] outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <span className="truncate">{row.variable.key}</span>

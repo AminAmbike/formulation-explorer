@@ -65,7 +65,7 @@ export function ScatterPlot() {
           <VariableSelect
             label="Vertical axis"
             value={state.y}
-            onChange={(y) => y && dispatch({ type: 'setAxes', x: state.x, y })}
+            onChange={(key) => key && dispatch({ type: 'setY', key })}
           />
           <Button
             variant="ghost"
@@ -80,7 +80,7 @@ export function ScatterPlot() {
           <VariableSelect
             label="Horizontal axis"
             value={state.x}
-            onChange={(x) => x && dispatch({ type: 'setAxes', x, y: state.y })}
+            onChange={(key) => key && dispatch({ type: 'setX', key })}
           />
         </div>
         <div className="flex items-center gap-1.5">

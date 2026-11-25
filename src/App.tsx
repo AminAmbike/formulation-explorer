@@ -1,3 +1,4 @@
+import { CommandBar } from '@/components/CommandBar'
 import { CorrelationHeatmap } from '@/components/charts/CorrelationHeatmap'
 import { ScatterPlot } from '@/components/charts/ScatterPlot'
 import { ExperimentTable } from '@/components/ExperimentTable'
@@ -39,12 +40,15 @@ export default function App() {
       <ExplorerProvider dataset={dataset}>
         <HoverProvider>
           <div className="mx-auto max-w-[1440px] px-6 pb-16">
-            <header className="py-6">
-              <h1 className="text-xl font-semibold tracking-tight">Formulation Explorer</h1>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {dataset.experiments.length} experiments · {dataset.inputs.length} inputs ·{' '}
-                {dataset.outputs.length} measured outputs
-              </p>
+            <header className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3 pt-6 pb-3">
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight">Formulation Explorer</h1>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {dataset.experiments.length} experiments · {dataset.inputs.length} inputs ·{' '}
+                  {dataset.outputs.length} measured outputs
+                </p>
+              </div>
+              <CommandBar />
             </header>
 
             <main className="grid gap-4">

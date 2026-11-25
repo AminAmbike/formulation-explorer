@@ -33,6 +33,8 @@ export interface ViewState {
 
 export type Action =
   | { type: 'setAxes'; x: string; y: string }
+  | { type: 'setX'; key: string }
+  | { type: 'setY'; key: string }
   | { type: 'swapAxes' }
   | { type: 'setColorBy'; key: string | null }
   /** A null range removes the filter for that variable. */
@@ -51,6 +53,12 @@ export function viewStateReducer(state: ViewState, action: Action): ViewState {
   switch (action.type) {
     case 'setAxes':
       return { ...state, x: action.x, y: action.y }
+
+    case 'setX':
+      return { ...state, x: action.key }
+
+    case 'setY':
+      return { ...state, y: action.key }
 
     case 'swapAxes':
       return { ...state, x: state.y, y: state.x }

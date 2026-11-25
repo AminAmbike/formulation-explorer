@@ -32,6 +32,17 @@ describe('viewStateReducer', () => {
     })
   })
 
+  it('sets one axis without touching the other', () => {
+    expect(viewStateReducer(base, { type: 'setX', key: 'Polymer 2' })).toMatchObject({
+      x: 'Polymer 2',
+      y: 'Viscosity',
+    })
+    expect(viewStateReducer(base, { type: 'setY', key: 'Cure Time' })).toMatchObject({
+      x: 'Polymer 1',
+      y: 'Cure Time',
+    })
+  })
+
   it('adds, replaces and removes a filter', () => {
     const added = viewStateReducer(base, { type: 'setFilter', key: 'Viscosity', range: [1, 2] })
     const replaced = viewStateReducer(added, { type: 'setFilter', key: 'Viscosity', range: [3, 4] })
